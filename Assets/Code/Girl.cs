@@ -1,111 +1,78 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Girl : MonoBehaviour {
-    public TextAsset Source;
-
-    [System.Serializable]
-    class SourceAnswer {
-        public string text;
-        public string type;
-    }
-
-    [System.Serializable]
-    class SourceDialogue {
-        public int reputation;
-        public string question;
-        public string[] context;
-        public SourceAnswer[] answers;
-    }
-
-    [System.Serializable]
-    class SourceGirl {
-        public string name;
-        public SourceDialogue[] dialogue;
-    }
-
-    enum AnswerType {
+    public enum AnswerType {
         None,
         Negative,
         Neutral,
         Positve
     }
 
-    class Answer {
-        public string text;
-        public AnswerType type;
+    public class Answer {
+        public string Text;
+        public AnswerType Type;
     }
 
-    class Dialogue {
-        public int reputation;
-        public string question;
-        public string[] context;
-        public Answer[] answers;
+    public class Dialogue {
+        public int RequiredReputation;
+        public string Question;
+        public string[] Context;
+        public Answer[] Answers;
     }
 
     public string Name;
-
+    public Text NameText;
+    public int Reputation;
+    
     Dialogue[] dialogue;
-    int dialogueIndex;
-    int contextIndex;
-    int reputation;
 
-    public void Awake() {
-        var sourceGirl = JsonUtility.FromJson<SourceGirl>(Source.text);
-        name = sourceGirl.name;
-
-        dialogue = new Dialogue[sourceGirl.dialogue.Length];
-        for (var i = 0; i < dialogue.Length; i++) {
-            var source = sourceGirl.dialogue[i];
-            var dest = dialogue[i];
-
-            dest.reputation = source.reputation;
-            dest.question = source.question;
-
-            dest.context = new string[source.context.Length];
-            for (var j = 0; j < dest.context.Length; j++) {
-                dest.context[j] = source.context[j];
-            }
-
-            dest.answers = new Answer[source.answers.Length];
-            for (var j = 0; j < dest.answers.Length; j++) {
-                var sourceAnswer = source.answers[j];
-                var destAnswer = dest.answers[j];
-
-                destAnswer.text = sourceAnswer.text;
-                if (sourceAnswer.type == "negative") {
-                    destAnswer.type = AnswerType.Negative;
-                }
-                else if (sourceAnswer.type == "neutral") {
-                    destAnswer.type = AnswerType.Neutral;
-                }
-                else if (sourceAnswer.type == "positive") {
-                    destAnswer.type = AnswerType.Positve;
-                }
-                else {
-                    Debug.LogError("Invalid dialogue answer type specified");
-                }
-            }
-        }
-    }
-
-    public void BeginInteraction() {
-        dialogueIndex = 0;
-    }
-
-    public void EndInteraction() {
-
-    }
-
-    public bool HasMoreMessages() {
-        return dialogueIndex < dialogue.Length;
-    }
-
-    public string GetDialogue() {
-        if (!HasMoreMessages()) {
-            Debug.LogError("There is no more dialogue!");
-            return "";
+    public Dialogue GetDialogue() {
+        if (dialogue == null) {
+            Debug.LogError("Failed to get dialogue, there doesn't seem to be any dialogue available.");
+            return null;
         }
 
-        return dialogue[dialogueIndex].context[contextIndex++];
+        var selected = dialogue[0];
+        foreach (var d in dialogue) {
+            if (Reputation >= d.RequiredReputation && d.RequiredReputation >= selected.RequiredReputation) {
+                selected = d;
+            }
+        }
+
+        return selected;
+    }
+
+    void Awake() {
+        // @todo: Do these operations in an editor panel.
+        NameText.text = Name;
+
+        dialogue = new Dialogue[] {
+            new Dialogue {
+                RequiredReputation = 0,
+                Question = "Does he know about the baby?",
+                Context = new string[] {
+                    "I never meant to come between you and him.",
+                    "If only I'd just gone over when she called.",
+                    "If you get me his phone, I might reconsider.",
+                    "Try focussing more on your life and less on mine!",
+                    "You were meant to be watching him!"
+                },
+                Answers = new Answer[] {
+                    new Answer {
+                        Text = "Yes.",
+                        Type = AnswerType.Negative
+                    },
+                    new Answer {
+                        Text = "No.",
+                        Type = AnswerType.Positve
+                    },
+                    new Answer {
+                        Text = "I don't know.",
+                        Type = AnswerType.Neutral
+                    }
+                }
+            }
+        };
     }
 }

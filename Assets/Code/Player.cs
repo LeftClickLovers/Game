@@ -1,53 +1,69 @@
 using UnityEngine;
 
 public class Player : MonoBehaviour {
+    public static Player GetInstance() {
+        return GameObject.FindWithTag("Player").GetComponent<Player>();
+    }
+
     public float MoveSpeed = 5;
 
-    enum State {
+    public enum State {
         None,
         Free,
         Interacting
     }
 
     State state;
-
-    public void BeginInteraction() {
-        state = State.Interacting;
-    }
+    Girl possibleInteraction;
 
     public void EndInteraction() {
         state = State.Free;
     }
 
-    public bool IsInteracting() {
-        return state == State.Interacting;
-    }
-
-    public void Awake() {
+    void Awake() {
         state = State.Free;
     }
 
-    public void Update() {
+    void Update() {
         switch (state) {
             case State.Free: {
                 var ddp = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0);
+                if (ddp.magnitude > 1) {
+                    ddp.Normalize();
+                }
+
                 transform.position = transform.position + (ddp * MoveSpeed * Time.deltaTime);
+
+                if (possibleInteraction != null && Input.GetKeyDown(KeyCode.E)) {
+                    var interactionController = InteractionController.GetInstance();
+                    interactionController.BeginInteraction(possibleInteraction);
+
+                    state = State.Interacting;
+                }
 
                 break;
             }
             case State.Interacting: {
                 if (Input.GetKeyDown(KeyCode.Escape)) {
-                    var gameController = GameObject.FindWithTag("GameController").GetComponent<GameController>();
-                    gameController.EndInteraction();
-                }
+                    var interactionController = InteractionController.GetInstance();
+                    interactionController.EndInteraction();
 
-                if (Input.GetKeyDown(KeyCode.Space)) {
-                    var gameController = GameObject.FindWithTag("GameController").GetComponent<GameController>();
-                    gameController.ShowNextMessage();
+                    state = State.Free;
                 }
 
                 break;
             }
         }        
+    }
+
+    void OnTriggerEnter2D(Collider2D them) {
+        var girl = them.GetComponent<Girl>();
+        if (girl) {
+            possibleInteraction = girl;
+        }
+    }
+
+    void OnTriggerExit2D(Collider2D them) {
+        possibleInteraction = null;
     }
 }
