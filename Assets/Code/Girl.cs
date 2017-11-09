@@ -1,46 +1,90 @@
 using UnityEngine;
 
 public class Girl : MonoBehaviour {
-    public string Name;
+    public TextAsset Source;
+
+    [System.Serializable]
+    class SourceAnswer {
+        public string text;
+        public string type;
+    }
+
+    [System.Serializable]
+    class SourceDialogue {
+        public int reputation;
+        public string question;
+        public string[] context;
+        public SourceAnswer[] answers;
+    }
+
+    [System.Serializable]
+    class SourceGirl {
+        public string name;
+        public SourceDialogue[] dialogue;
+    }
 
     enum AnswerType {
+        None,
         Negative,
         Neutral,
         Positve
     }
 
-    struct Answer {
-        public AnswerType type;
+    class Answer {
         public string text;
+        public AnswerType type;
     }
 
-    struct Dialogue {
-        public string[] context;
+    class Dialogue {
+        public int reputation;
         public string question;
-        public string[] answers;
+        public string[] context;
+        public Answer[] answers;
     }
+
+    public string Name;
 
     Dialogue[] dialogue;
     int dialogueIndex;
     int contextIndex;
-
-    ResourceRequest dialogueResourceRequest;
-    bool isLoadingDialogue;
+    int reputation;
 
     public void Awake() {
-        dialogueResourceRequest = Resources.LoadAsync("Dialogue/Carly", typeof(TextAsset));
-        isLoadingDialogue = true;
-    }
+        var sourceGirl = JsonUtility.FromJson<SourceGirl>(Source.text);
+        name = sourceGirl.name;
 
-    public void Update() {
-        if (isLoadingDialogue && dialogueResourceRequest.isDone) {
-            isLoadingDialogue = false;
+        dialogue = new Dialogue[sourceGirl.dialogue.Length];
+        for (var i = 0; i < dialogue.Length; i++) {
+            var source = sourceGirl.dialogue[i];
+            var dest = dialogue[i];
 
-            var textAsset = dialogueResourceRequest.asset as TextAsset;
-            Debug.Log(textAsset.text);
+            dest.reputation = source.reputation;
+            dest.question = source.question;
 
-            // @todo: Free the source text here? Does Unity manage this kind of thing for me?
-            // Object.Destroy(textAsset);
+            dest.context = new string[source.context.Length];
+            for (var j = 0; j < dest.context.Length; j++) {
+                dest.context[j] = source.context[j];
+            }
+
+            dest.answers = new Answer[source.answers.Length];
+            for (var j = 0; j < dest.answers.Length; j++) {
+                var sourceAnswer = source.answers[j];
+                var destAnswer = dest.answers[j];
+
+                destAnswer.text = sourceAnswer.text;
+                if (sourceAnswer.type == "negative") {
+                    destAnswer.type = AnswerType.Negative;
+                }
+                else if (sourceAnswer.type == "neutral") {
+                    destAnswer.type = AnswerType.Neutral;
+                }
+                else if (sourceAnswer.type == "positive") {
+                    destAnswer.type = AnswerType.Positve;
+                }
+                else {
+                    Debug.LogError("Invalid dialogue answer type specified");
+                }
+            }
         }
     }
 

@@ -15,7 +15,7 @@ public class GameController : MonoBehaviour {
         interactingPlayer.BeginInteraction();
         interactingGirl.BeginInteraction();
 
-        InteractionUI.SetSpeaker(interactingGirl.Name);
+        InteractionUI.SetSpeaker(interactingGirl.name);
         InteractionUI.SetMessage(interactingGirl.GetDialogue());
     }
 

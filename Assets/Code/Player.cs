@@ -4,6 +4,7 @@ public class Player : MonoBehaviour {
     public float MoveSpeed = 5;
 
     enum State {
+        None,
         Free,
         Interacting
     }
