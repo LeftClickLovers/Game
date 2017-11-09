@@ -3,27 +3,45 @@ using UnityEngine;
 public class Girl : MonoBehaviour {
     public string Name;
 
+    enum AnswerType {
+        Negative,
+        Neutral,
+        Positve
+    }
+
+    struct Answer {
+        public AnswerType type;
+        public string text;
+    }
+
     struct Dialogue {
-        string[] context;
-        string question;
-        string[] answers;
+        public string[] context;
+        public string question;
+        public string[] answers;
     }
 
     Dialogue[] dialogue;
     int dialogueIndex;
+    int contextIndex;
+
+    ResourceRequest dialogueResourceRequest;
+    bool isLoadingDialogue;
 
     public void Awake() {
-        dialogue = new Dialogue[1];
-        
-        dialogue[0].context = new string[] {
+        dialogueResourceRequest = Resources.LoadAsync("Dialogue/Carly", typeof(TextAsset));
+        isLoadingDialogue = true;
+    }
 
-        };
-        
-        {
-            "Here is some information.",
-            "I am now giving you some context.",
-            "What would you say in response?"
-        };
+    public void Update() {
+        if (isLoadingDialogue && dialogueResourceRequest.isDone) {
+            isLoadingDialogue = false;
+
+            var textAsset = dialogueResourceRequest.asset as TextAsset;
+            Debug.Log(textAsset.text);
+
+            // @todo: Free the source text here? Does Unity manage this kind of thing for me?
+            // Object.Destroy(textAsset);
+        }
     }
 
     public void BeginInteraction() {
@@ -44,6 +62,6 @@ public class Girl : MonoBehaviour {
             return "";
         }
 
-        return dialogue[dialogueIndex++];
+        return dialogue[dialogueIndex].context[contextIndex++];
     }
 }

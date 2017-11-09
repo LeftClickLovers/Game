@@ -30,7 +30,7 @@ public class GameController : MonoBehaviour {
     }
 
     public void ShowNextMessage() {
-        if (interactingGirl.HasMoreDialogue()) {
+        if (interactingGirl.HasMoreMessages()) {
             InteractionUI.SetMessage(interactingGirl.GetDialogue());
         }
     }
